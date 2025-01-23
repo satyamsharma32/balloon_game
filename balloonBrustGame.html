@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balloon Burst Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #FFFAE3; 
+            font-family: Arial, sans-serif;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .cloud::before {
+            width: 60px;
+            height: 60px;
+            top: -40px;
+            left: 20px;
+        }
+
+        .cloud::after {
+            width: 40px;
+            height: 40px;
+            top: 20px;
+            right: 20px;
+        }
+
+        .balloon {
+            position: absolute;
+            width: 50px;
+            height: 70px;
+            background: radial-gradient(circle, #FF6347 60%, #FF4500);
+            border-radius: 50% 50% 40% 40%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .explosion {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, yellow, red, transparent);
+            border-radius: 50%;
+            animation: explode 0.3s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes explode {
+            from {
+                transform: scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        #airPump {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 50px;
+            background: #8A2BE2;
+            border: 2px solid black;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer"></div>
+    <div id="airPump">Pump Air</div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const airPump = document.getElementById('airPump');
+
+        let balloon = null;
+        let size = 50;
+        let isFlying = false;
+        let floatingInterval;
+
+        function createCloud(x, y, size) {
+            const cloud = document.createElement('div');
+            cloud.classList.add('cloud');
+            cloud.style.width = `${size}px`;
+            cloud.style.height = `${size}px`;
+            cloud.style.left = `${x}px`;
+            cloud.style.top = `${y}px`;
+            gameContainer.appendChild(cloud);
+        }
+
+        for (let i = 0; i < 5; i++) {
+            createCloud(Math.random() * window.innerWidth, Math.random() * window.innerHeight / 2, 100 + Math.random() * 50);
+        }
+
+        function createBalloon() {
+            balloon = document.createElement('div');
+            balloon.classList.add('balloon');
+            balloon.style.width = `${size}px`;
+            balloon.style.height = `${size * 1.4}px`;
+            balloon.style.left = `${Math.random() * (window.innerWidth - size)}px`;
+            balloon.style.top = `${window.innerHeight - size * 1.4}px`;
+            gameContainer.appendChild(balloon);
+
+            balloon.addEventListener('click', burstBalloon);
+        }
+
+        airPump.addEventListener('click', () => {
+            if (!balloon || isFlying) return;
+
+            size += 10;
+            balloon.style.width = `${size}px`;
+            balloon.style.height = `${size * 1.4}px`;
+
+            if (size >= 100) {
+                makeBalloonFly();
+            }
+        });
+
+        function makeBalloonFly() {
+            isFlying = true;
+            const speed = 4;
+
+            floatingInterval = setInterval(() => {
+                const x = parseFloat(balloon.style.left);
+                const y = parseFloat(balloon.style.top);
+
+                const dx = (Math.random() - 0.5) * speed * 10;
+                const dy = (Math.random() - 0.5) * speed * 10;
+
+                balloon.style.left = `${Math.min(Math.max(x + dx, 0), window.innerWidth - size)}px`;
+                balloon.style.top = `${Math.min(Math.max(y + dy, 0), window.innerHeight - size * 1.4)}px`;
+            }, 100);
+        }
+
+        function burstBalloon(event) {
+            isFlying = false;
+            clearInterval(floatingInterval);
+            createExplosion(event.clientX, event.clientY);
+            balloon.remove();
+            balloon = null;
+            size = 50;
+            createBalloon();
+        }
+
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.classList.add('explosion');
+            explosion.style.left = `${x - 15}px`;
+            explosion.style.top = `${y - 15}px`;
+            gameContainer.appendChild(explosion);
+
+            setTimeout(() => explosion.remove(), 300);
+        }
+
+        createBalloon();
+    </script>
+</body>
+</html>
